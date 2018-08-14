@@ -1,11 +1,7 @@
 <?php
 
+/* Add getting a database connection of Heroku */
 $url = parse_url(getenv("DATABASE_URL"));
-
-$host = $url["host"];
-$username = $url["user"];
-$password = $url["pass"];
-$database = substr($url["path"], 1);
 
 return [
 
@@ -62,15 +58,16 @@ return [
             'engine' => null,
         ],
 
+        /* change for Heroku's DATABASE_URL */
         'pgsql' => [
-    'driver'   => 'pgsql',
-    'host'     => $host,
-    'database' => $database,
-    'username' => $username,
-    'password' => $password,
-    'charset'  => 'utf8',
-    'prefix'   => '',
-    'schema'   => 'public',
+            'driver'   => 'pgsql',
+            'host'     => $url["host"],
+            'database' => substr($url["path"], 1),
+            'username' => $url['username'],
+            'password' => $url['password'],
+            'charset'  => 'utf8',
+            'prefix'   => '',
+            'schema'   => 'public',
         ],
 
         'sqlsrv' => [

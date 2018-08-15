@@ -86,7 +86,7 @@ $url = parse_url(getenv("DATABASE_URL"));
 
 他、キャッシュやセッションを利用する場合には、`Redis` や `memcachier` へ保持するように変更する必要もあります。
 
-## Heroku App を作成
+## Heroku App の準備
 
 実際に Heroku 上で実行させるには、Herokuアプリを準備した上で、`APP_KEY` 環境変数の定義が必要です。
 まずは、Herokuアプリを作ります。
@@ -97,6 +97,11 @@ Creating app... done, ⬢ afternoon-shelf-58335
 https://afternoon-shelf-58335.herokuapp.com/ | https://git.heroku.com/afternoon-shelf-58335.git
 ```
 
+Heroku Postgres も必要です。次のコマンドか、Heroku ダッシュボードから導入ください。
+
+```bash:heroku
+heroku addons:create heroku-postgresql
+```
 
 ## APP_KEY を定義
 
@@ -109,7 +114,9 @@ APP_KEY: base64:NlWvRWrMlKFwA+EkX6fuE+njWyMIR7jwwe9uRP34LKw=
 
 ## 起動確認
 
-以上で、次のコマンドで起動できるはずです。
+手動で、Heroku へソースコードをデプロイする場合には、`git push heroku master` でどうぞ。
+
+ここまで準備できれば、次のコマンドでアプリケーションを開けます。
 ```bash:open
 $ heroku open
 ```
@@ -117,5 +124,6 @@ $ heroku open
 ## # Heroku Button
 
 次のボタンをクリックすれば、git を介さず、直接 Heroku へデプロイ可能です。
+
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
 

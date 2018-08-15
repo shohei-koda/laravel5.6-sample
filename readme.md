@@ -114,3 +114,8 @@ APP_KEY: base64:NlWvRWrMlKFwA+EkX6fuE+njWyMIR7jwwe9uRP34LKw=
 $ heroku open
 ```
 
+## # Heroku Button
+
+次のボタンをクリックすれば、git を介さず、直接 Heroku へデプロイ可能です。
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
+

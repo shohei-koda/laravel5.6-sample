@@ -1,60 +1,116 @@
-<p align="center"><img src="https://laravel.com/assets/img/components/logo-laravel.svg"></p>
+`Heroku` へ `Laravel 5.6` を deploy したサンプルコード
 
-<p align="center">
-<a href="https://travis-ci.org/laravel/framework"><img src="https://travis-ci.org/laravel/framework.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://poser.pugx.org/laravel/framework/d/total.svg" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://poser.pugx.org/laravel/framework/v/stable.svg" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://poser.pugx.org/laravel/framework/license.svg" alt="License"></a>
-</p>
+## 前提条件
 
-## About Laravel
+- Heroku アカウント取得済み
+- [heroku toolbelt](https://devcenter.heroku.com/articles/heroku-cli) を導入済み
+- Composer を導入済み
+- git 導入済み
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel attempts to take the pain out of development by easing common tasks used in the majority of web projects, such as:
+## composer で Laravel Project を作成
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+```bash:create-project
+$ composer create-project laravel/laravel
+Installing laravel/laravel (v5.6.33)
+  - Installing laravel/laravel (v5.6.33): Downloading (100%)
+Created project in /Users/tabe/temp/laravel
+> @php -r "file_exists('.env') || copy('.env.example', '.env');"
+Loading composer repositories with package information
+Updating dependencies (including require-dev)
+(中略)
+Writing lock file
+Generating optimized autoload files
+> Illuminate\Foundation\ComposerScripts::postAutoloadDump
+> @php artisan package:discover
+Discovered Package: fideloper/proxy
+Discovered Package: laravel/tinker
+Discovered Package: nunomaduro/collision
+Package manifest generated successfully.
+> @php artisan key:generate
+Application key [base64:*******] set successfully.
+```
 
-Laravel is accessible, yet powerful, providing tools needed for large, robust applications.
+## Procfile を準備
+Heroku の php標準では、apache2 が起動するだけなので、ディレクトリを指定して起動させるために、`Procfile` を準備する。
 
-## Learning Laravel
+```bash:Procfile
+$ cd laravel
+$ ls
+app             composer.json   database        public          routes          tests
+artisan         composer.lock   package.json    readme.md       server.php      vendor
+bootstrap       config          phpunit.xml     resources       storage         webpack.mix.js
+$ echo 'web: vendor/bin/heroku-php-apache2 public' >> Procfile
+```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of any modern web application framework, making it a breeze to get started learning the framework.
+## git 初期化
 
-If you're not in the mood to read, [Laracasts](https://laracasts.com) contains over 1100 video tutorials on a range of topics including Laravel, modern PHP, unit testing, JavaScript, and more. Boost the skill level of yourself and your entire team by digging into our comprehensive video library.
+```bash:git-init
+$ git init
+Initialized empty Git repository in /****/laravel/.git/
+```
 
-## Laravel Sponsors
+## .gitignore 作成
 
-We would like to extend our thanks to the following sponsors for helping fund on-going Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell):
+```bash:gitignore
+$ gibo dump Composer Laravel >> .gitignore
+$ echo .env.example >> .gitignore
+```
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[British Software Development](https://www.britishsoftware.co)**
-- [Fragrantica](https://www.fragrantica.com)
-- [SOFTonSOFA](https://softonsofa.com/)
-- [User10](https://user10.com)
-- [Soumettre.fr](https://soumettre.fr/)
-- [CodeBrisk](https://codebrisk.com)
-- [1Forge](https://1forge.com)
-- [TECPRESSO](https://tecpresso.co.jp/)
-- [Runtime Converter](http://runtimeconverter.com/)
-- [WebL'Agence](https://weblagence.com/)
-- [Invoice Ninja](https://www.invoiceninja.com)
+## config/database.php を修正して、PostgreSQL への接続を default とする。
 
-## Contributing
+ファイルの先頭で、Heroku で定義される環境変数を読み込むようにしておく
+```bash:config/database.php
+$url = parse_url(getenv("DATABASE_URL"));
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+`return [` 直後にある `default` を `PostgreSQL` 向けに変更しておく。
+```bash:config/database.php
+    'default' => env('DB_CONNECTION', 'pgsql'),
+```
 
-## Security Vulnerabilities
+`'pgsql'` 項目を、`DATABASE_URL` をパースしてきた内容から取得できるよう、変更する。
+```bash:config/database.php
+        'pgsql' => [
+            'driver'   => 'pgsql',
+            'host'     => $url["host"],
+            'database' => substr($url["path"], 1),
+            'username' => $url['user'],
+            'password' => $url['pass'],
+            'charset'  => 'utf8',
+            'prefix'   => '',
+            'schema'   => 'public',
+        ],
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+ソースをここまで修正すれば、最低限、Heroku 上で動作させることは可能です。
 
-## License
+他、キャッシュやセッションを利用する場合には、`Redis` や `memcachier` へ保持するように変更する必要もあります。
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Heroku App を作成
+
+実際に Heroku 上で実行させるには、Herokuアプリを準備した上で、`APP_KEY` 環境変数の定義が必要です。
+まずは、Herokuアプリを作ります。
+
+```bash:heroku-create
+$ heroku create
+Creating app... done, ⬢ afternoon-shelf-58335
+https://afternoon-shelf-58335.herokuapp.com/ | https://git.heroku.com/afternoon-shelf-58335.git
+```
+
+
+## APP_KEY を定義
+
+次に、`heroku config:set` コマンドを使って、環境変数を設定します。
+```bash:config
+$ heroku config:set APP_KEY=$(php artisan --no-ansi key:generate --show)
+Setting APP_KEY and restarting ⬢ sheltered-lake-94045... done, v9
+APP_KEY: base64:NlWvRWrMlKFwA+EkX6fuE+njWyMIR7jwwe9uRP34LKw=
+```
+
+## 起動確認
+
+以上で、次のコマンドで起動できるはずです。
+```bash:open
+$ heroku open
+```
+
